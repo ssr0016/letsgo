@@ -10,6 +10,7 @@ require (
 )
 
 require (
+	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/docker v25.0.3+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
@@ -20,4 +21,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.48.0 // indirect
 	go.opentelemetry.io/otel/trace v1.23.1 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/tools v0.10.0 // indirect
 )

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/golang-migrate/migrate/source/file"
+	"greenlight.ssr0016.ph/internal/data"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/postgres"
@@ -34,6 +35,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -67,11 +69,20 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error applying migrations:", err)
 	}
+
 	logger.Println("Migrations applied successfully")
+
+	// Rollback migrations (if needed)
+	// err = RollbackMigrations(db, "./migrations")
+	// if err != nil {
+	// 	logger.Fatal("Error rolling back migrations:", err)
+	// }
+	// logger.Println("Migrations rolled back successfully")
 
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	srv := &http.Server{
@@ -113,6 +124,7 @@ func openDB(cfg config) (*sql.DB, error) {
 	return db, nil
 }
 
+// ApplyMigrations applies all available migrations.
 func applyMigrations(db *sql.DB, migrationsDir string) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -127,6 +139,28 @@ func applyMigrations(db *sql.DB, migrationsDir string) error {
 	}
 
 	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return err
+	}
+
+	return nil
+}
+
+// RollbackMigrations rolls back all applied migrations.
+func RollbackMigrations(db *sql.DB, migrationsDir string) error {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://"+migrationsDir,
+		"postgres", driver)
+	if err != nil {
+		return err
+	}
+
+	err = m.Down()
 	if err != nil && err != migrate.ErrNoChange {
 		return err
 	}
