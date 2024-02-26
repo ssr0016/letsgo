@@ -11,3 +11,5 @@
 # pkill -SIGKILL api
 # pkill -SIGTERM api
 # ctrl + \
+
+# migrate create -seq -ext .sql -dir ./migrations create_tokens_table
