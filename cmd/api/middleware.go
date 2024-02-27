@@ -230,3 +230,37 @@ func (app *application) requirePermission(code string, next http.HandlerFunc) ht
 	// Wrap this with the requireActivatedUser() middleware before returning it.
 	return app.requireActivatedUser(fn)
 }
+
+func (app *application) enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Add the "Vary", "Origin" header.
+		w.Header().Add("Vary", "Origin")
+
+		// add the "Vary", "Access-control-Request-Method" header.
+		w.Header().Add("Vary", "Access-Control-Request-Method")
+
+		// Get the value of the request's "Origin" header.
+		origin := r.Header.Get("Origin")
+
+		// Check if the origin is trusted.
+		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
+			for i := range app.config.cors.trustedOrigins {
+				if origin == app.config.cors.trustedOrigins[i] {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+
+					// Check if the request has the HTTP method OPTIONS and contains the
+					// "Access-Control-Request-Method" header.
+					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+						// Set the necessary preflight response headers
+						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
+						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+
+						w.WriteHeader(http.StatusOK)
+						return
+					}
+				}
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
